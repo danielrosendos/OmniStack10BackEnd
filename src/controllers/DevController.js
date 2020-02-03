@@ -37,6 +37,47 @@ export default {
 
     return response.json(dev);
   },
+  async updateUser(req, res) {
+    const { github_username, techs, latitude, longitude } = req.body;
 
-  // Criar o updtade e destroy
+    const findUser = Dev.findOne({ github_username });
+
+    if (!findUser)
+      return res.json({ message: 'Usuário não encontrado' }).status(400);
+
+    const response = await axios.get(
+      `https://api.github.com/users/${github_username}`
+    );
+
+    const { name = login, avatar_url, bio } = response.data;
+
+    const techsArray = parseStringAsArray(techs);
+
+    const location = {
+      type: 'Point',
+      coordinates: [longitude, latitude],
+    };
+
+    const dev = await Dev.update({
+      name,
+      avatar_url,
+      bio,
+      techs: techsArray,
+      location,
+    });
+
+    return res.json(dev);
+  },
+  async deleteUser(req, res) {
+    const { github_username } = req.body;
+
+    const findUser = await Dev.findOne({ github_username });
+
+    if (!findUser)
+      return res.json({ message: 'Usuário não encontrado' }).status(400);
+
+    const dev = await Dev.findOneAndDelete({ github_username });
+
+    return res.json({ dev });
+  },
 };
